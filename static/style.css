@@ -1,0 +1,32 @@
+.board {
+    position: relative;
+    background-color: #DDD;
+}
+
+.board-dot {
+    position: absolute;
+    background-image: url("/static/dot.png");
+    height: 14px;
+    width: 14px;
+    margin-left: -7px;
+    margin-bottom: -7px;
+}
+
+.board-line {
+    transform-origin: top left;
+    position: absolute;
+    background-image: url("/static/line.png");
+    height: 2px;
+}
+
+.board-line-horizontal {
+
+}
+
+.board-line-vertical {
+    transform: rotate(270deg);
+}
+
+.board-line-hint {
+    opacity: 0.5;
+}

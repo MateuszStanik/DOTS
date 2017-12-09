@@ -32,7 +32,7 @@ def listrooms():
     if 'nick' not in session:
         return redirect(url_for('welcome'))
     if 'room' in session:
-        return redirect(url_for('game'))
+        return redirect(url_for('play'))
     return render_template('index.html', body='listrooms', rooms=rooms.get_all())
 
 @app.route('/createroom', methods=['POST'])
@@ -40,14 +40,14 @@ def createroom():
     if 'nick' not in session:
         return redirect(url_for('welcome'))
     if 'room' in session:
-        return redirect(url_for('game'))
+        return redirect(url_for('play'))
     name = request.form['name']
     passwd = request.form['passwd']
     if Room.is_valid_name(name) and Room.is_valid_passwd(passwd):
         room = Room.create(name, passwd)
         room.join(session)
         rooms.add_room(room)
-        return redirect(url_for('game'))
+        return redirect(url_for('play'))
     flash('Nieprawidlowe parametry pokoju')
     return redirect(url_for('listrooms'))
 
@@ -56,12 +56,12 @@ def join(room_id):
     if 'nick' not in session:
         return redirect(url_for('welcome'))
     if 'room' in session:
-        return redirect(url_for('game'))
+        return redirect(url_for('play'))
     if rooms.exists(room_id):
         room = rooms.get(room_id)
         if not room.has_passwd() or room.is_passwd(request.form['passwd']):
             room.join(session)
-            return redirect(url_for('game'))
+            return redirect(url_for('play'))
         flash('Niepoprawne haslo')
         return redirect(url_for('listrooms'))
     flash('Pokoj nie istnieje')
@@ -80,15 +80,15 @@ def leave():
         flash('Pokoj nie istnieje')
     return redirect(url_for('listrooms'))
 
-@app.route('/game', methods=['GET'])
-def game():
+@app.route('/play', methods=['GET'])
+def play():
     if 'nick' not in session:
         return redirect(url_for('welcome'))
     if 'room' not in session:
         return redirect(url_for('listrooms'))
     room = rooms.get(session['room'])
     game = room.game
-    return render_template('index.html', body='game', room=room, game=game)
+    return render_template('index.html', body='play', room=room, game=game)
 
 if __name__ == '__main__':
     socket.run(app, debug=True, host='localhost')

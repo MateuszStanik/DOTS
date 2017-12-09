@@ -1,10 +1,5 @@
 <h3>Dostępne pokoje:</h3>
-<form action="{{url_for('createroom')}}" method="POST">
-    <input type="text" name="name">
-    <input type="text" name="passwd">
-    <input type="submit" value="Stwórz">
-</form>
-<hr>
+
 <ul class="rooms">
 {% if rooms %}
     {% for room_id in rooms %}
@@ -12,3 +7,11 @@
     {% endfor %}
 {% endif %}
 </ul>
+
+<hr>
+
+<form action="{{url_for('createroom')}}" method="POST">
+    <input type="text" name="name" placeholder="Nazwa">
+    <input type="text" name="passwd" placeholder="Hasło">
+    <input type="submit" value="Stwórz">
+</form>
