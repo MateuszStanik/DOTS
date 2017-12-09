@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Dots</title>
+    </head>
+    <body id="{{ body }}">
+        <div class="flashes">
+            <ul>
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                {% for message in messages %}
+                  <li>{{ message }}</li>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            </ul>
+        </div>
+
+        {% include body + '.html' %}
+
+        <script
+              src="https://code.jquery.com/jquery-3.2.1.min.js"
+              integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+              crossorigin="anonymous"></script>
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+        <script type="text/javascript" src="{{url_for('static', filename='scripts.js')}}"></script>
+    </body>
+</html>
