@@ -2,7 +2,7 @@ var log = console.log.bind(console);
 
 function Board(id)
 {
-    var that = this;
+    var self = this;
 
     this.board = $('.board');
     this.width = Number(this.board.attr('data-width'));
@@ -25,39 +25,59 @@ function Board(id)
     this.hint = undefined;
 
     this.board.on('click', function (e) {
-        var xy = that.getXY(e);
+        var xy = self.getXY(e);
 
-        var s = that.getSurrounding(xy.x, xy.y);
+        var s = self.getSurrounding(xy.x, xy.y);
 
-        if (s.d > 8) {
-            return;
-        }
+        // if (s.d > 8) {
+        //     return;
+        // }
 
-        if (that.hint) {
-            that.hint.remove();
-        }
+        // if (self.hint) {
+        //     self.hint.remove();
+        // }
 
-        if (!that.getLine()) {
-            // draw line
-            that.drawLine(s.no0, s.no1);
-        }
+        // if (!self.getLine()) {
+        //     self.drawLine(s.no0, s.no1);
+        // }
+        $.ajax({
+            type: "post",
+            url: "ajax/onclick",
+            data: JSON.stringify({
+                roomId  : $('#roomId').val(),
+                x       : xy.x,
+                y       : xy.y,
+                s       : {
+                    a : 1,
+                    b : 2,
+                },
+            }),
+            dataType: 'json',
+            contentType: 'application/json; charset=utf-8',
+        }).done(function( data ) {
+            var json = $.parseJSON(data);
+
+            log(json);
+        }).fail(function() {
+            log('Failed AJAX request');
+        });
     });
 
     this.board.on('mousemove', function (e) {
-        var xy = that.getXY(e);
+        var xy = self.getXY(e);
 
-        var s = that.getSurrounding(xy.x, xy.y);
+        var s = self.getSurrounding(xy.x, xy.y);
 
-        if (that.hint) {
-            that.hint.remove();
+        if (self.hint) {
+            self.hint.remove();
         }
 
         if (s.d > 8) {
             return;
         }
 
-        if (!that.getLine(s.no0, s.no1)) {
-            that.hint = that.drawHint(s.no0, s.no1);
+        if (!self.getLine(s.no0, s.no1)) {
+            self.hint = self.drawHint(s.no0, s.no1);
         }
     });
 
@@ -112,8 +132,8 @@ function Board(id)
     }
 
     this.getXY = function(e) {
-        var x = Math.max(Math.min(e.pageX - $(e.currentTarget).offset().left, this.width), 0);
-        var y = Math.max(Math.min(this.height - (e.pageY - $(e.currentTarget).offset().top), this.height), 0);
+        var x = Number(Math.max(Math.min(e.pageX - $(e.currentTarget).offset().left, this.width), 0));
+        var y = Number(Math.max(Math.min(this.height - (e.pageY - $(e.currentTarget).offset().top), this.height), 0));
 
         return {
             'x' : x,
@@ -123,22 +143,22 @@ function Board(id)
 
     this.getSurrounding = function(x, y) {
         var i = Math.floor(y / this.h);
-        var ybottom = y % this.h;
-        var ytop = this.h - ybottom;
-        var dy = Math.min(ybottom, ytop);
+        var yBottom = y % this.h;
+        var yTop = this.h - yBottom;
+        var dy = Math.min(yBottom, yTop);
 
         var j = Math.floor(x / this.w);
-        var xleft = x % this.w;
-        var xright = this.w - xleft;
-        var dx = Math.min(xleft, xright);
+        var xLeft = x % this.w;
+        var xRight = this.w - xLeft;
+        var dx = Math.min(xLeft, xRight);
 
         // log(x, y);
-        // log (xleft, xright, ybottom, ytop);
+        // log (xLeft, xRight, yBottom, yTop);
 
         var no0, no1;
         if (dx < dy) {
             // vertical line
-            if (xright < xleft) {
+            if (xRight < xLeft) {
                 // right
                 no0 = i * this.cols + j + 1;
                 no1 = no0 + this.cols;
@@ -149,7 +169,7 @@ function Board(id)
             }
         } else {
             // horizontal line
-            if (ytop < ybottom) {
+            if (yTop < yBottom) {
                 // top
                 no0 = (i + 1) * this.cols + j;
                 no1 = no0 + 1;
@@ -166,10 +186,10 @@ function Board(id)
             'd'     : Math.min(dx, dy),
             'dx'    : dx,
             'dy'    : dy,
-            'xleft' : xleft,
-            'xright': xright,
-            'ytop'  : ytop,
-            'ybottom': ybottom,
+            'xLeft' : xLeft,
+            'xRight': xRight,
+            'yTop'  : yTop,
+            'yBottom': yBottom,
             'i'     : i,
             'j'     : j,
         }

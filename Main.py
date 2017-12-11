@@ -1,7 +1,7 @@
 import os
 import uuid
 from pprint import pprint
-from flask import Flask, render_template, session, redirect, url_for, escape, request, flash, session
+from flask import Flask, render_template, session, redirect, url_for, escape, request, flash, session, jsonify
 from flask_socketio import SocketIO
 from dots3 import *
 
@@ -104,7 +104,22 @@ def method_not_allowed(e):
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html')
+    return render_template('404.html'), 404
+
+@app.route('/ajax/onclick', methods=['POST'])
+def ajax_on_click():
+    roomId = request.json['roomId']
+    room = rooms.get(roomId)
+    game = room.game
+    # board = game.board
+    x = request.json['x']
+    y = request.json['y']
+    s = request.json['s']
+
+    # r = game.click(x, y, s)
+
+    return jsonify(status='ok', x=x, y=y, s=s)
+
 
 if __name__ == '__main__':
     socket.run(app, debug=True, host='localhost')
