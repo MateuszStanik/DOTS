@@ -51,17 +51,24 @@ def createroom():
     flash('Nieprawidlowe parametry pokoju')
     return redirect(url_for('listrooms'))
 
-@app.route('/join/<string:room_id>', methods=['POST'])
-def join(room_id):
+# @app.route('/join/<string:roomId>', methods=['POST'])
+@app.route('/join', methods=['POST'])
+def join():
     if 'nick' not in session:
         return redirect(url_for('welcome'))
     if 'room' in session:
         return redirect(url_for('play'))
-    if rooms.exists(room_id):
-        room = rooms.get(room_id)
-        if not room.has_passwd() or room.is_passwd(request.form['passwd']):
+    if 'roomId' not in request.form:
+        flash('Nie wybrano pokoju')
+        return redirect(url_for('listrooms'))
+    roomId = request.form['roomId']
+    if rooms.exists(roomId):
+        room = rooms.get(roomId)
+        if not room.has_passwd() or ('roomPasswd' in request.form and room.is_passwd(request.form['roomPasswd'])):
             room.join(session)
             return redirect(url_for('play'))
+        if not 'roomPasswd' in request.form:
+            return render_template('index.html', body='joinpasswd', roomId=roomId)
         flash('Niepoprawne haslo')
         return redirect(url_for('listrooms'))
     flash('Pokoj nie istnieje')
@@ -89,6 +96,15 @@ def play():
     room = rooms.get(session['room'])
     game = room.game
     return render_template('index.html', body='play', room=room, game=game)
+
+
+@app.errorhandler(405)
+def method_not_allowed(e):
+    return redirect(url_for('welcome'))
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html')
 
 if __name__ == '__main__':
     socket.run(app, debug=True, host='localhost')

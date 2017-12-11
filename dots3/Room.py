@@ -36,3 +36,6 @@ class Room:
     def leave(self, session):
         del session['room']
         del self.players[session['sid']]
+
+    def n_of_players(self):
+        return len(self.players)

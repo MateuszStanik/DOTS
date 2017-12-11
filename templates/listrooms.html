@@ -1,17 +1,28 @@
 <h3>Dostępne pokoje:</h3>
 
-<ul class="rooms">
-{% if rooms %}
-    {% for room_id in rooms %}
-      <li>{{rooms[room_id].name}}</li>
-    {% endfor %}
-{% endif %}
-</ul>
+<form action="{{url_for('join')}}" method="POST">
+    <ul class="rooms">
+    {% if rooms %}
+        {% for roomId in rooms %}
+            {% set room = rooms[roomId] %}
+            <li>
+                <input type="radio" name="roomId" value="{{roomId}}">
+                {{ room.name }}
+                <i class="fa fa-users" aria-hidden="true"></i> {{ room.n_of_players() }}
+                {% if room.has_passwd() %}
+                    <i class="fa fa-lock" aria-hidden="true"></i>
+                {% endif %}
+            </li>
+        {% endfor %}
+    {% endif %}
+    </ul>
+    <button type="submit">Dołącz</button>
+</form>
 
 <hr>
 
 <form action="{{url_for('createroom')}}" method="POST">
     <input type="text" name="name" placeholder="Nazwa">
     <input type="text" name="passwd" placeholder="Hasło">
-    <input type="submit" value="Stwórz">
+    <button type="submit">Stwórz</button>
 </form>

@@ -1,0 +1,6 @@
+<form action="{{ url_for('join') }}" method="post">
+    <h3>Podaj hasło</h3>
+    <input type="hidden" name="roomId" value="{{ roomId }}">
+    <input type="text" name="roomPasswd">
+    <button type="submit">Ok</button>
+</form>
