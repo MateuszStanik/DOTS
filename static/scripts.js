@@ -26,56 +26,44 @@ function Board(id)
 
     this.board.on('click', function (e) {
         var xy = self.getXY(e);
-
         var s = self.getSurrounding(xy.x, xy.y);
-
-        // if (s.d > 8) {
-        //     return;
-        // }
 
         // if (self.hint) {
         //     self.hint.remove();
         // }
 
-        // if (!self.getLine()) {
-        //     self.drawLine(s.no0, s.no1);
-        // }
         $.ajax({
             type: "post",
-            url: "ajax/onclick",
+            url: "ajax/putline",
             data: JSON.stringify({
-                roomId  : $('#roomId').val(),
                 x       : xy.x,
                 y       : xy.y,
-                s       : {
-                    a : 1,
-                    b : 2,
-                },
+                s       : s,
             }),
             dataType: 'json',
             contentType: 'application/json; charset=utf-8',
-        }).done(function( data ) {
-            var json = $.parseJSON(data);
-
+        }).done(function( json ) {
             log(json);
+            if (json.ok && json.res.line) {
+                var no0 = json.res.deltaBoard.lines[0][0];
+                var no1 = json.res.deltaBoard.lines[0][1];
+                self.drawLine(no0, no1);
+            }
         }).fail(function() {
-            log('Failed AJAX request');
+            log('Failed "ajax/putline" request');
         });
     });
 
     this.board.on('mousemove', function (e) {
         var xy = self.getXY(e);
-
         var s = self.getSurrounding(xy.x, xy.y);
 
         if (self.hint) {
             self.hint.remove();
         }
-
         if (s.d > 8) {
             return;
         }
-
         if (!self.getLine(s.no0, s.no1)) {
             self.hint = self.drawHint(s.no0, s.no1);
         }
@@ -92,8 +80,7 @@ function Board(id)
         return dot;
     }
 
-    this.drawLine = function (no0, no1)
-    {
+    this.drawLine = function (no0, no1) {
         var a = $('div.board-dot[data-no="' + Math.min(no0, no1) + '"]');
         var b = $('div.board-dot[data-no="' + Math.max(no0, no1) + '"]');
         var dir;
@@ -114,26 +101,25 @@ function Board(id)
         return line;
     }
 
+    this.drawHint = function(no0, no1) {
+
+        return this.drawLine(no0, no1).addClass('board-line-hint');
+    }
+
+    this.drawFill = function (no, type) {
+
+        return this.fillTpl.clone().addClass('board-fill-' + type).attr('data-no', no);
+    }
+
     this.getLine = function (no0, no1) {
         var line = $('div.board-line[data-no0="' + Math.min(no0, no1) + '"][data-no1="' + Math.max(no0, no1) + '"]');
 
         return line.length > 0 ? line : undefined;
     }
 
-    this.drawHint = function(no0, no1) {
-        var hint = this.drawLine(no0, no1);
-        hint.addClass('board-line-hint');
-
-        return hint;
-    }
-
-    this.drawFill = function (no, type) {
-        var fill = this.fillTpl.clone().addClass('board-fill-' + type).attr('data-no', no);
-    }
-
     this.getXY = function(e) {
-        var x = Number(Math.max(Math.min(e.pageX - $(e.currentTarget).offset().left, this.width), 0));
-        var y = Number(Math.max(Math.min(this.height - (e.pageY - $(e.currentTarget).offset().top), this.height), 0));
+        var x = Number(Math.max(Math.min(e.pageX - $(e.currentTarget).offset().left, this.width - 0.001), 0));
+        var y = Number(Math.max(Math.min(this.height - (e.pageY - $(e.currentTarget).offset().top), this.height - 0.001), 0));
 
         return {
             'x' : x,
@@ -151,9 +137,6 @@ function Board(id)
         var xLeft = x % this.w;
         var xRight = this.w - xLeft;
         var dx = Math.min(xLeft, xRight);
-
-        // log(x, y);
-        // log (xLeft, xRight, yBottom, yTop);
 
         var no0, no1;
         if (dx < dy) {

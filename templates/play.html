@@ -2,7 +2,7 @@
 
 <input type="hidden" id="roomId" value="{{ room.id }}">
 
-<div id="theboard" class="board" data-width="640" data-height="480" data-rows="8" data-cols="10">
+<div id="theboard" class="board" data-width="640" data-height="480" data-rows="{{ room.game.rows }}" data-cols="{{ room.game.cols }}">
 </div>
 
 

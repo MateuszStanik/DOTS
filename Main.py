@@ -106,19 +106,28 @@ def method_not_allowed(e):
 def page_not_found(e):
     return render_template('404.html'), 404
 
-@app.route('/ajax/onclick', methods=['POST'])
-def ajax_on_click():
-    roomId = request.json['roomId']
+@app.route('/ajax/putline', methods=['POST'])
+def ajax_put_line():
+    if 'room' not in session:
+        return jsonify(ok=False, res="Missing room id")
+    roomId = session['room']
+    if not rooms.exists(roomId):
+        return jsonify(ok=False, res="No such room")
     room = rooms.get(roomId)
     game = room.game
-    # board = game.board
+    if not game.isStarted:
+        return jsonify(ok=False, res="Game not started")
+    if game.has_ended():
+        return jsonify(ok=False, res="Game has ended")
+    if 'x' not in request.json or 'y' not in request.json or 's' not in request.json:
+        return jsonify(ok=False, res="Missing request parameters")
     x = request.json['x']
     y = request.json['y']
     s = request.json['s']
 
-    # r = game.click(x, y, s)
+    res = game.play_put_line(x, y, s)
 
-    return jsonify(status='ok', x=x, y=y, s=s)
+    return jsonify(ok=True, res=res)
 
 
 if __name__ == '__main__':
