@@ -8,6 +8,7 @@ class Room:
         self.name = name
         self.passwd = passwd
         self.game = Game()
+        self.game.set_settings(2, 3)
         self.game.start_game()
         self.players = {}
 

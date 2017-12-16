@@ -1,3 +1,4 @@
+from pprint import pprint
 from dots3 import *
 
 class Game:
@@ -26,17 +27,20 @@ class Game:
         no1 = s['no1']
 
         if s['d'] > 8:
-            return { 'line' : False }
+            return { 'playAccepted' : False }
 
         line = (no0, no1)
         if line in self.lines:
-            return { 'line' : False }
+            return { 'playAccepted' : False }
+
+        if not (no0 == no1 - 1 or no0 == no1 - self.cols):
+            return { 'playAccepted' : False }
 
         self.lines[line] = True
 
         a = b = c = d = None
         if no0 == no1 - 1:
-            # horizontal
+            # horizontal line
             if no0 >= self.cols:
                 # bottom
                 a = no0 - self.cols
@@ -46,7 +50,7 @@ class Game:
                 c = no0 + self.cols
                 d = no1 + self.cols
         else:
-            # vertical
+            # vertical line
             if no0 % self.cols > 0:
                 # left
                 a = no0 - 1
@@ -57,23 +61,22 @@ class Game:
                 d = no1 + 1
 
         closedSquareAB = closedSquareCD = False
-        if a and b:
+        if not a == None:
             # bottom / left square
             closedSquareAB = ((a, b) in self.lines) and ((a, no0) in self.lines) and ((b, no1) in self.lines)
-        if c and d:
+        if not c == None:
             # top / right square
             closedSquareCD = ((c, d) in self.lines) and ((no0, c) in self.lines) and ((no1, d) in self.lines)
-        scored = closedSquareAB + closedSquareCD
-        self.score[self.currentPlayer] += scored
+
+        self.score[self.currentPlayer] += closedSquareAB + closedSquareCD
 
         nextPlayer = 'B' if self.currentPlayer == 'A' else 'A'
 
         hasEnded = self.has_ended()
 
         ret = {
-            'line'          : True,
-            'scored'        : scored,
-            'nextPlayer'    : nextPlayer,
+            'playAccepted'  : True,
+            'currentPlayer' : self.currentPlayer,
             'hasEnded'      : hasEnded,
             'deltaBoard'    : {
                 'lines'     : [
@@ -82,10 +85,15 @@ class Game:
                 'squares'   : [],
             }
         }
+        ret['score' + self.currentPlayer] = self.score[self.currentPlayer]
+        if hasEnded:
+            ret['winner'] = 'draw' if self.score['A'] == self.score['B'] else 'A' if self.score['A'] > self.score['B'] else 'B'
+        else:
+            ret['nextPlayer'] = nextPlayer
         if closedSquareAB:
             ret['deltaBoard']['squares'].append(a)
         if closedSquareCD:
-            ret['deltaBoard']['squares'].append(c)
+            ret['deltaBoard']['squares'].append(no0)
 
         self.currentPlayer = nextPlayer
 

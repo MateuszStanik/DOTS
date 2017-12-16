@@ -129,6 +129,5 @@ def ajax_put_line():
 
     return jsonify(ok=True, res=res)
 
-
 if __name__ == '__main__':
     socket.run(app, debug=True, host='localhost')

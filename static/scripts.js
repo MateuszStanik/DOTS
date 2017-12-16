@@ -1,30 +1,37 @@
 var log = console.log.bind(console);
 
+function Game()
+{
+    var self = this;
+
+    self.currentPlayer = 'A'
+}
+
 function Board(id)
 {
     var self = this;
 
-    this.board = $('.board');
-    this.width = Number(this.board.attr('data-width'));
-    this.height = Number(this.board.attr('data-height'));
+    self.board = $('.board');
+    self.width = Number(self.board.attr('data-width'));
+    self.height = Number(self.board.attr('data-height'));
 
-    this.board.css('width', this.width);
-    this.board.css('height', this.height);
+    self.board.css('width', self.width);
+    self.board.css('height', self.height);
 
-    this.rows = Number(this.board.attr('data-rows'));
-    this.cols = Number(this.board.attr('data-cols'));
+    self.rows = Number(self.board.attr('data-rows'));
+    self.cols = Number(self.board.attr('data-cols'));
 
-    this.w = this.width / (this.cols - 1);
-    this.h = this.height / (this.rows - 1);
-    this.n = this.rows * this.cols;
+    self.w = self.width / (self.cols - 1);
+    self.h = self.height / (self.rows - 1);
+    self.n = self.rows * self.cols;
 
-    this.dotTpl = $('<div></div>').addClass('board-dot');
-    this.lineTpl = $('<div></div>').addClass('board-line');
-    this.fillTpl = $('<div></div>').addClass('board-fill');
+    self.dotTpl = $('<div></div>').addClass('board-dot');
+    self.lineTpl = $('<div></div>').addClass('board-line');
+    self.squareTpl = $('<div></div>').addClass('board-square').css('width', self.w).css('height', self.h);
 
-    this.hint = undefined;
+    self.hint = undefined;
 
-    this.board.on('click', function (e) {
+    self.board.on('click', function (e) {
         var xy = self.getXY(e);
         var s = self.getSurrounding(xy.x, xy.y);
 
@@ -44,17 +51,19 @@ function Board(id)
             contentType: 'application/json; charset=utf-8',
         }).done(function( json ) {
             log(json);
-            if (json.ok && json.res.line) {
-                var no0 = json.res.deltaBoard.lines[0][0];
-                var no1 = json.res.deltaBoard.lines[0][1];
-                self.drawLine(no0, no1);
+            if (!json.ok) {
+                $('.notifs ul').prepend('<li>' + json.res + '</li>');
+                return;
+            }
+            if (json.res.playAccepted) {
+                self.updateBoard(json.res);
             }
         }).fail(function() {
             log('Failed "ajax/putline" request');
         });
     });
 
-    this.board.on('mousemove', function (e) {
+    self.board.on('mousemove', function (e) {
         var xy = self.getXY(e);
         var s = self.getSurrounding(xy.x, xy.y);
 
@@ -69,18 +78,18 @@ function Board(id)
         }
     });
 
-    this.drawDot = function (no) {
-        var i = Math.floor(no / this.cols);
-        var j = no % this.cols;
-        var x = j * this.w;
-        var y = i * this.h;
-        var dot = this.dotTpl.clone().attr('data-no', no).attr('data-x', x).attr('data-y', y).css('bottom', y + 'px').css('left', x + 'px');
-        this.board.append(dot);
+    self.drawDot = function (no) {
+        var i = Math.floor(no / self.cols);
+        var j = no % self.cols;
+        var x = j * self.w;
+        var y = i * self.h;
+        var dot = self.dotTpl.clone().attr('data-no', no).attr('data-x', x).attr('data-y', y).css('bottom', y + 'px').css('left', x + 'px');
+        self.board.append(dot);
 
         return dot;
     }
 
-    this.drawLine = function (no0, no1) {
+    self.drawLine = function (no0, no1) {
         var a = $('div.board-dot[data-no="' + Math.min(no0, no1) + '"]');
         var b = $('div.board-dot[data-no="' + Math.max(no0, no1) + '"]');
         var dir;
@@ -92,34 +101,40 @@ function Board(id)
             log('drawLine exception: invalid dots');
             return;
         }
-        var length = dir == 'horizontal' ? this.w : this.h;
+        var length = dir == 'horizontal' ? self.w : self.h;
         var x = a.attr('data-x') - 1;
         var y = a.attr('data-y') - 1;
-        var line = this.lineTpl.clone().addClass('board-line-' + dir).attr('data-no0', no0).attr('data-no1', no1).css('width', length + 'px').css('bottom', y + 'px').css('left', x + 'px');
-        this.board.append(line);
+        var line = self.lineTpl.clone().addClass('board-line-' + dir).attr('data-no0', no0).attr('data-no1', no1).css('width', length + 'px').css('bottom', y + 'px').css('left', x + 'px');
+        self.board.append(line);
 
         return line;
     }
 
-    this.drawHint = function(no0, no1) {
+    self.drawHint = function(no0, no1) {
 
-        return this.drawLine(no0, no1).addClass('board-line-hint');
+        return self.drawLine(no0, no1).addClass('board-line-hint');
     }
 
-    this.drawFill = function (no, type) {
+    self.drawSquare = function (no, player) {
+        var i = Math.floor(no / self.cols);
+        var j = no % self.cols;
+        var x = j * self.w;
+        var y = i * self.h;
+        var square = self.squareTpl.clone().addClass('board-square-' + player.toLowerCase()).attr('data-no', no).css('bottom', y + 'px').css('left', x + 'px');;
+        self.board.append(square);
 
-        return this.fillTpl.clone().addClass('board-fill-' + type).attr('data-no', no);
+        return square;
     }
 
-    this.getLine = function (no0, no1) {
+    self.getLine = function (no0, no1) {
         var line = $('div.board-line[data-no0="' + Math.min(no0, no1) + '"][data-no1="' + Math.max(no0, no1) + '"]');
 
         return line.length > 0 ? line : undefined;
     }
 
-    this.getXY = function(e) {
-        var x = Number(Math.max(Math.min(e.pageX - $(e.currentTarget).offset().left, this.width - 0.001), 0));
-        var y = Number(Math.max(Math.min(this.height - (e.pageY - $(e.currentTarget).offset().top), this.height - 0.001), 0));
+    self.getXY = function(e) {
+        var x = Number(Math.max(Math.min(e.pageX - $(e.currentTarget).offset().left, self.width - 0.001), 0));
+        var y = Number(Math.max(Math.min(self.height - (e.pageY - $(e.currentTarget).offset().top), self.height - 0.001), 0));
 
         return {
             'x' : x,
@@ -127,15 +142,15 @@ function Board(id)
         };
     }
 
-    this.getSurrounding = function(x, y) {
-        var i = Math.floor(y / this.h);
-        var yBottom = y % this.h;
-        var yTop = this.h - yBottom;
+    self.getSurrounding = function(x, y) {
+        var i = Math.floor(y / self.h);
+        var yBottom = y % self.h;
+        var yTop = self.h - yBottom;
         var dy = Math.min(yBottom, yTop);
 
-        var j = Math.floor(x / this.w);
-        var xLeft = x % this.w;
-        var xRight = this.w - xLeft;
+        var j = Math.floor(x / self.w);
+        var xLeft = x % self.w;
+        var xRight = self.w - xLeft;
         var dx = Math.min(xLeft, xRight);
 
         var no0, no1;
@@ -143,22 +158,22 @@ function Board(id)
             // vertical line
             if (xRight < xLeft) {
                 // right
-                no0 = i * this.cols + j + 1;
-                no1 = no0 + this.cols;
+                no0 = i * self.cols + j + 1;
+                no1 = no0 + self.cols;
             } else {
                 // left
-                no0 = i * this.cols + j;
-                no1 = no0 + this.cols;
+                no0 = i * self.cols + j;
+                no1 = no0 + self.cols;
             }
         } else {
             // horizontal line
             if (yTop < yBottom) {
                 // top
-                no0 = (i + 1) * this.cols + j;
+                no0 = (i + 1) * self.cols + j;
                 no1 = no0 + 1;
             } else {
                 // bottom
-                no0 = i * this.cols + j;
+                no0 = i * self.cols + j;
                 no1 = no0 + 1;
             }
         }
@@ -178,11 +193,58 @@ function Board(id)
         }
     }
 
-    this.init = function () {
+    self.init = function () {
         var no = 0;
-        for (i = 0; i < this.rows; i++) {
-            for (j = 0; j < this.cols; j++) {
-                this.drawDot(no++);
+        for (i = 0; i < self.rows; i++) {
+            for (j = 0; j < self.cols; j++) {
+                self.drawDot(no++);
+            }
+        }
+        //  SOCKETIO po wejsciu do pokoju
+        // $.ajax({
+        //     type: "post",
+        //     url: "ajax/socketio",
+        //     dataType: 'json',
+        //     contentType: 'application/json; charset=utf-8',
+        // }).done(function( json ) {
+        //     log(json);
+        //     if (!json.ok) {
+        //         $('.notifs ul').prepend('<li>' + json.res + '</li>');
+        //         return;
+        //     }
+        //     self.updateBoard(json.res);
+        //     self.canPlay = json.res.canPlay;
+        // }).fail(function() {
+        //     log('Failed "ajax/putline" request');
+        // });
+    }
+
+    self.updateBoard = function (res) {
+        for (var i = 0; i < res.deltaBoard.lines.length; ++i) {
+            var no0 = res.deltaBoard.lines[i][0];
+            var no1 = res.deltaBoard.lines[i][1];
+            self.drawLine(no0, no1);
+        }
+        for (var i = 0; i < res.deltaBoard.squares.length; ++i) {
+
+            var no = res.deltaBoard.squares[i];
+            log('square', no);
+            self.drawSquare(no, res.currentPlayer);
+        }
+        if (res.scoreA) {
+            $('.score-a').html(res.scoreA);
+        }
+        if (res.scoreB) {
+            $('.score-b').html(res.scoreB);
+        }
+        if (res.nextPlayer) {
+            $('.current-player').html(res.nextPlayer);
+        }
+        if (res.hasEnded) {
+            if (res.winner == 'draw') {
+                $('.results').html('Remis!')
+            } else {
+                $('.results').html('Wygrał gracz ' + res.winner)
             }
         }
     }
